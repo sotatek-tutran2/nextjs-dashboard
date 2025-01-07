@@ -17,6 +17,8 @@ async function seedUsers() {
 
   const insertedUsers = await Promise.all(
     users.map(async (user) => {
+      // It's good practice to hash passwords before storing them in a database. Hashing converts a password to a fixed-length string of characters, Which
+      // appears random, providing a layer of security even if the user's data is exposed.
       const hashedPassword = await bcrypt.hash(user.password, 10);
       return client.sql`
         INSERT INTO users (id, name, email, password)

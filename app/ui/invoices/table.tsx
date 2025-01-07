@@ -90,6 +90,8 @@ export default async function InvoicesTable({
                         className="rounded-full"
                         width={28}
                         height={28}
+                        // Next.js includes the eslint-plugin-jsx-a11y plugin in its ESLint config to help catch accessibility issues early.
+                        // For example, this plugin warns if you have images without alt text, use the aria-* and role attributes incorrectly, and more
                         alt={`${invoice.name}'s profile picture`}
                       />
                       <p>{invoice.name}</p>

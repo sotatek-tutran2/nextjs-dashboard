@@ -1,3 +1,6 @@
+'use client';
+// Since useActionState is a hook, you will need to turn your form into a Client component.
+
 import { CustomerField } from '@/app/lib/definitions';
 import Link from 'next/link';
 import {
@@ -7,10 +10,25 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/outline';
 import { Button } from '@/app/ui/button';
+import { ActionState, createInvoice } from '@/app/lib/actions';
+
+// In your create-form.tsx component, import the useActionState hook from react
+import { useActionState } from 'react';
+
+/* Server-Side validation : By validating forms on the server, you can:
+  - Ensure your data is in the expected format before sending it to your database 
+  - Reduce the risk of malicious users bypassing client-side validation
+  - Have one source of truth for what is considered valid data
+*/
 
 export default function Form({ customers }: { customers: CustomerField[] }) {
+  const initialState: ActionState = { message: null, errors: {} };
+  const [state, formAction] = useActionState(createInvoice, initialState);
+
+  console.log(state);
+
   return (
-    <form>
+    <form action={formAction}>
       <div className="rounded-md bg-gray-50 p-4 md:p-6">
         {/* Customer Name */}
         <div className="mb-4">
@@ -18,11 +36,18 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
             Choose customer
           </label>
           <div className="relative">
+            {/* There are a couple of ways you can validate forms on the client. The simplest way would be to rely on the form validation provided by 
+              the browser by adding the required attribute to the input and select elements in your forms
+            */}
             <select
               id="customer"
               name="customerId"
               className="peer block w-full cursor-pointer rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
               defaultValue=""
+              // This establishes a relationship between the select element and the error message container. It indicates that the container
+              // with id="customer-error" describes the select element. Screen readers will read this description when the user interacts with the
+              // select box to notify them of errors
+              aria-describedby="customer-error"
             >
               <option value="" disabled>
                 Select a customer
@@ -35,12 +60,21 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
             </select>
             <UserCircleIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500" />
           </div>
+          {/* the id="customer-error" is necessary for aria-describedby to establish the relationship */}
+          <div id="customer-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.customerId &&
+              state.errors.customerId.map((error: string) => (
+                <p key={error} className="mt-2 text-sm text-red-500">
+                  {error}
+                </p>
+              ))}
+          </div>
         </div>
 
         {/* Invoice Amount */}
         <div className="mb-4">
           <label htmlFor="amount" className="mb-2 block text-sm font-medium">
-            Choose an amount
+            Enter an amount
           </label>
           <div className="relative mt-2 rounded-md">
             <div className="relative">
@@ -51,9 +85,18 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
                 step="0.01"
                 placeholder="Enter USD amount"
                 className="peer block w-full rounded-md border border-gray-200 py-2 pl-10 text-sm outline-2 placeholder:text-gray-500"
+                aria-describedby="amount-error"
               />
               <CurrencyDollarIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-gray-500 peer-focus:text-gray-900" />
             </div>
+          </div>
+          <div id="amount-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.amount &&
+              state.errors.amount.map((error: string) => (
+                <p key={error} className="mt-2 text-sm text-red-500">
+                  {error}
+                </p>
+              ))}
           </div>
         </div>
 
@@ -71,6 +114,7 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
                   type="radio"
                   value="pending"
                   className="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-gray-600 focus:ring-2"
+                  aria-describedby="status-error"
                 />
                 <label
                   htmlFor="pending"
@@ -86,6 +130,7 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
                   type="radio"
                   value="paid"
                   className="h-4 w-4 cursor-pointer border-gray-300 bg-gray-100 text-gray-600 focus:ring-2"
+                  aria-describedby="status-error"
                 />
                 <label
                   htmlFor="paid"
@@ -96,7 +141,16 @@ export default function Form({ customers }: { customers: CustomerField[] }) {
               </div>
             </div>
           </div>
+          <div id="status-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.status &&
+              state.errors.status.map((error: string) => (
+                <p key={error} className="mt-2 text-sm text-red-500">
+                  {error}
+                </p>
+              ))}
+          </div>
         </fieldset>
+        <p className="mt-2 text-sm text-red-500">{state.message}</p>
       </div>
       <div className="mt-6 flex justify-end gap-4">
         <Link
